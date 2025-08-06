@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  # Servicio para el Front-end (React+Vite servido por Nginx)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: implameq_frontend
+    ports:
+      - "8080:80" # Mapea el puerto 80 del contenedor al 8080 de tu máquina
+    restart: unless-stopped
+
+  # Servicio para el Back-end (Node.js)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: implameq_backend
+    ports:
+      - "3001:3001" # Mapea el puerto 3001 del contenedor al 3001 de tu máquina
+    environment:
+      # Aquí puedes pasar variables de entorno a tu server.js
+      # Por ejemplo, la URL de la base de datos de PostgreSQL
+      - DATABASE_URL=postgresql://prod_app_backend:beImplameq94@host.docker.internal:5432/implameq_prod_db
+      - NODE_ENV=production
+    restart: unless-stopped

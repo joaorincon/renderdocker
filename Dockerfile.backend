@@ -1,0 +1,22 @@
+# Usamos una imagen de Node.js
+FROM node:18-alpine
+
+# Establecemos el directorio de trabajo
+WORKDIR /app
+
+# Copiamos los archivos de dependencias
+COPY package.json package-lock.json ./
+
+# Instalamos las dependencias (solo las de producción si están separadas)
+RUN npm install --omit=dev
+
+# Copiamos el server.js y cualquier otro archivo que necesite
+COPY server.js .
+# Si tu server.js depende de otros archivos/carpetas, cópialos también
+# COPY ./lib ./lib
+
+# Exponemos el puerto que usa tu servidor Node.js (ajústalo si es diferente)
+EXPOSE 3001
+
+# El comando para iniciar el servidor
+CMD ["node", "server.js"]
