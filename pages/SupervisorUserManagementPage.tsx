@@ -7,11 +7,11 @@ import { UserRole, UserInfo } from '../App';
 
 
 interface SupervisorUserManagementPageProps {
-  onBack: () => void;
-  onLogout: () => void;
-  userRole: UserRole | null;
-  currentUser: UserInfo | null;
-  onChangePassword: () => void;
+    onBack: () => void;
+    onLogout: () => void;
+    userRole: UserRole | null;
+    currentUser: UserInfo | null;
+    onChangePassword: () => void;
 }
 
 interface User {
@@ -32,7 +32,7 @@ const SupervisorUserManagementPage: React.FC<SupervisorUserManagementPageProps> 
 
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
-    
+
     const canManageUsers = userRole === 'root' || userRole === 'admin_planta';
 
     const usersToDisplay = users.filter(user => {
@@ -57,7 +57,7 @@ const SupervisorUserManagementPage: React.FC<SupervisorUserManagementPageProps> 
         setIsLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:3001/api/users');
+            const response = await fetch('https://impla-backend.onrender.com/api/users');
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Error al cargar los usuarios.');
@@ -81,21 +81,21 @@ const SupervisorUserManagementPage: React.FC<SupervisorUserManagementPageProps> 
 
     const handleCreateUser = async (newUserData: NewUserData) => {
         try {
-            const response = await fetch('http://localhost:3001/api/users', {
+            const response = await fetch('https://impla-backend.onrender.com/api/users', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(newUserData),
             });
-            
+
             const data = await response.json();
 
             if (!response.ok) {
                 throw new Error(data.message || 'Error al crear el usuario.');
             }
 
-            setUsers(prevUsers => [...prevUsers, data].sort((a,b) => {
+            setUsers(prevUsers => [...prevUsers, data].sort((a, b) => {
                 if (a.is_active !== b.is_active) {
                     return a.is_active ? -1 : 1;
                 }
@@ -116,7 +116,7 @@ const SupervisorUserManagementPage: React.FC<SupervisorUserManagementPageProps> 
             return Promise.reject(new Error('No hay un usuario conectado para realizar la acción.'));
         }
         try {
-            const response = await fetch(`http://localhost:3001/api/users/${userId}`, {
+            const response = await fetch(`https://impla-backend.onrender.com/api/users/${userId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...userData, updated_by_id: currentUser.id }),
@@ -126,7 +126,7 @@ const SupervisorUserManagementPage: React.FC<SupervisorUserManagementPageProps> 
                 throw new Error(updatedUser.message || 'Error al actualizar el usuario.');
             }
 
-            setUsers(prevUsers => 
+            setUsers(prevUsers =>
                 prevUsers
                     .map(u => u.id === userId ? updatedUser : u)
                     .sort((a, b) => {
@@ -153,7 +153,7 @@ const SupervisorUserManagementPage: React.FC<SupervisorUserManagementPageProps> 
         setIsDeleting(true);
         setDeleteError(null);
         try {
-            const response = await fetch(`http://localhost:3001/api/users/${userToDelete.id}`, {
+            const response = await fetch(`https://impla-backend.onrender.com/api/users/${userToDelete.id}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ deleted_by_id: currentUser.id })
@@ -191,8 +191,8 @@ const SupervisorUserManagementPage: React.FC<SupervisorUserManagementPageProps> 
                 </div>
             );
         }
-        
-        if(usersToDisplay.length === 0 && !isLoading) {
+
+        if (usersToDisplay.length === 0 && !isLoading) {
             return <div className="text-center p-8 text-slate-600">No se encontraron usuarios para mostrar.</div>;
         }
 
@@ -258,55 +258,55 @@ const SupervisorUserManagementPage: React.FC<SupervisorUserManagementPageProps> 
         );
     };
 
-  return (
-    <>
-        <div className="flex h-full min-h-screen flex-col bg-slate-100">
-          <SupervisorSubPageHeader onBack={onBack} onLogout={onLogout} title="Gestionar Usuarios" onChangePassword={onChangePassword} currentUser={currentUser} />
-          <main className="flex-1 justify-center py-8 px-4 sm:px-6 md:px-10">
-            <div className="max-w-5xl mx-auto">
-                <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-slate-900">Lista de Usuarios del Sistema</h2>
-                        {canManageUsers && (
-                            <button 
-                                onClick={() => setIsCreateModalOpen(true)}
-                                className="flex items-center justify-center gap-2 rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                                <span className="material-icons text-lg">add</span>
-                                Crear Usuario
-                            </button>
-                        )}
+    return (
+        <>
+            <div className="flex h-full min-h-screen flex-col bg-slate-100">
+                <SupervisorSubPageHeader onBack={onBack} onLogout={onLogout} title="Gestionar Usuarios" onChangePassword={onChangePassword} currentUser={currentUser} />
+                <main className="flex-1 justify-center py-8 px-4 sm:px-6 md:px-10">
+                    <div className="max-w-5xl mx-auto">
+                        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold text-slate-900">Lista de Usuarios del Sistema</h2>
+                                {canManageUsers && (
+                                    <button
+                                        onClick={() => setIsCreateModalOpen(true)}
+                                        className="flex items-center justify-center gap-2 rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                                        <span className="material-icons text-lg">add</span>
+                                        Crear Usuario
+                                    </button>
+                                )}
+                            </div>
+                            {renderContent()}
+                        </div>
                     </div>
-                    {renderContent()}
-                </div>
+                </main>
             </div>
-          </main>
-        </div>
-        <CreateUserModal
-            isOpen={isCreateModalOpen}
-            onClose={() => setIsCreateModalOpen(false)}
-            onCreateUser={handleCreateUser}
-        />
-        <EditUserModal
-            isOpen={!!userToEdit}
-            onClose={() => setUserToEdit(null)}
-            onSave={handleUpdateUser}
-            user={userToEdit}
-            currentUserRole={userRole}
-            currentUser={currentUser}
-        />
-        <DeleteConfirmationModal
-            isOpen={!!userToDelete}
-            onClose={() => {
-                setUserToDelete(null);
-                setDeleteError(null);
-            }}
-            onConfirm={handleConfirmDelete}
-            userName={userToDelete?.nombre_completo || ''}
-            isLoading={isDeleting}
-            error={deleteError}
-        />
-    </>
-  );
+            <CreateUserModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onCreateUser={handleCreateUser}
+            />
+            <EditUserModal
+                isOpen={!!userToEdit}
+                onClose={() => setUserToEdit(null)}
+                onSave={handleUpdateUser}
+                user={userToEdit}
+                currentUserRole={userRole}
+                currentUser={currentUser}
+            />
+            <DeleteConfirmationModal
+                isOpen={!!userToDelete}
+                onClose={() => {
+                    setUserToDelete(null);
+                    setDeleteError(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                userName={userToDelete?.nombre_completo || ''}
+                isLoading={isDeleting}
+                error={deleteError}
+            />
+        </>
+    );
 };
 
 export default SupervisorUserManagementPage;

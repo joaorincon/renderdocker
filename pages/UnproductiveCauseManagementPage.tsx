@@ -21,7 +21,7 @@ interface Category {
 interface GroupedReason {
     [key: string]: DowntimeReason[];
 }
-type ModalState = 
+type ModalState =
     | { type: 'close' }
     | { type: 'add_reason' }
     | { type: 'edit_reason', reason: DowntimeReason }
@@ -104,7 +104,7 @@ const UnproductiveCauseManagementPage: React.FC<{
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [modalState, setModalState] = useState<ModalState>({ type: 'close' });
-    
+
     const canManageCauses = userRole === 'root' || userRole === 'admin_planta';
 
     const groupedReasons = useMemo(() => {
@@ -122,11 +122,11 @@ const UnproductiveCauseManagementPage: React.FC<{
         setError(null);
         try {
             const [reasonsRes, categoriesRes] = await Promise.all([
-                fetch('http://localhost:3001/api/downtime/management-data'),
-                fetch('http://localhost:3001/api/downtime/categories')
+                fetch('https://impla-backend.onrender.com/api/downtime/management-data'),
+                fetch('https://impla-backend.onrender.com/api/downtime/categories')
             ]);
             if (!reasonsRes.ok || !categoriesRes.ok) throw new Error('Failed to fetch data.');
-            
+
             const reasonsData: DowntimeReason[] = await reasonsRes.json();
             const categoriesData: Category[] = await categoriesRes.json();
 
@@ -164,7 +164,7 @@ const UnproductiveCauseManagementPage: React.FC<{
                             </div>
                         </summary>
                         <div className="border-t border-slate-200">
-                           <ReasonTable reasons={groupedReasons[category]} onEdit={(reason) => setModalState({type: 'edit_reason', reason})} onDelete={(reason) => setModalState({type: 'delete_reason', reason})} canManage={canManageCauses}/>
+                            <ReasonTable reasons={groupedReasons[category]} onEdit={(reason) => setModalState({ type: 'edit_reason', reason })} onDelete={(reason) => setModalState({ type: 'delete_reason', reason })} canManage={canManageCauses} />
                         </div>
                     </details>
                 ))}
@@ -190,7 +190,7 @@ const UnproductiveCauseManagementPage: React.FC<{
                                     </button>
                                 )}
                             </div>
-                            <CategoryTable categories={categories} onEdit={cat => setModalState({type: 'edit_category', category: cat})} onDelete={cat => setModalState({type: 'delete_category', category: cat})} isLoading={isLoading} canManage={canManageCauses} />
+                            <CategoryTable categories={categories} onEdit={cat => setModalState({ type: 'edit_category', category: cat })} onDelete={cat => setModalState({ type: 'delete_category', category: cat })} isLoading={isLoading} canManage={canManageCauses} />
                         </div>
                         {/* --- Reason Management Section --- */}
                         <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
@@ -208,7 +208,7 @@ const UnproductiveCauseManagementPage: React.FC<{
                     </div>
                 </main>
             </div>
-            
+
             {/* --- MODALS --- */}
             {(modalState.type === 'add_reason' || modalState.type === 'edit_reason') && (
                 <ReasonModal
@@ -219,7 +219,7 @@ const UnproductiveCauseManagementPage: React.FC<{
                     categories={categories}
                 />
             )}
-             {(modalState.type === 'add_category' || modalState.type === 'edit_category') && (
+            {(modalState.type === 'add_category' || modalState.type === 'edit_category') && (
                 <CategoryModal
                     isOpen
                     onClose={() => setModalState({ type: 'close' })}
@@ -231,7 +231,7 @@ const UnproductiveCauseManagementPage: React.FC<{
                 <DeleteModalWrapper type="reason" item={modalState.reason} isOpen onClose={() => setModalState({ type: 'close' })} onSuccess={handleSuccess} />
             )}
             {modalState.type === 'delete_category' && (
-                 <DeleteModalWrapper type="category" item={modalState.category} isOpen onClose={() => setModalState({ type: 'close' })} onSuccess={handleSuccess} />
+                <DeleteModalWrapper type="category" item={modalState.category} isOpen onClose={() => setModalState({ type: 'close' })} onSuccess={handleSuccess} />
             )}
         </>
     );
@@ -244,7 +244,7 @@ const CategoryTable: React.FC<{
     onDelete: (c: Category) => void,
     isLoading: boolean,
     canManage: boolean
-}> = ({categories, onEdit, onDelete, isLoading, canManage}) => {
+}> = ({ categories, onEdit, onDelete, isLoading, canManage }) => {
     if (isLoading) return <div className="text-center p-4">Cargando...</div>
     if (categories.length === 0 && !isLoading) return <div className="text-center p-4 text-slate-500">No hay categorías.</div>
 
@@ -278,7 +278,7 @@ const CategoryTable: React.FC<{
 }
 
 
-const ReasonTable: React.FC<{reasons: DowntimeReason[], onEdit: (r: DowntimeReason) => void, onDelete: (r: DowntimeReason) => void, canManage: boolean}> = ({reasons, onEdit, onDelete, canManage}) => (
+const ReasonTable: React.FC<{ reasons: DowntimeReason[], onEdit: (r: DowntimeReason) => void, onDelete: (r: DowntimeReason) => void, canManage: boolean }> = ({ reasons, onEdit, onDelete, canManage }) => (
     <div className="overflow-x-auto">
         <table className="w-full text-sm text-left text-slate-500">
             <thead className="text-xs text-slate-700 uppercase bg-slate-50">
@@ -295,7 +295,7 @@ const ReasonTable: React.FC<{reasons: DowntimeReason[], onEdit: (r: DowntimeReas
                         <td className="px-6 py-4 font-mono text-xs">{reason.codigo}</td>
                         <td className="px-6 py-4 font-medium text-slate-800">{reason.nombre_causa}</td>
                         <td className="px-6 py-4">
-                             <span className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${reason.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            <span className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${reason.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                 {reason.is_active ? 'Activo' : 'Inactivo'}
                             </span>
                         </td>
@@ -325,12 +325,12 @@ const ReasonModal: React.FC<{
     const [categoriaId, setCategoriaId] = useState<number | string>('');
     const [isActive, setIsActive] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string|null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const isEditMode = !!reasonToEdit;
 
     useEffect(() => {
-        if(isOpen) {
+        if (isOpen) {
             setCodigo(reasonToEdit?.codigo || '');
             setNombreCausa(reasonToEdit?.nombre_causa || '');
             setDescripcion(reasonToEdit?.descripcion || '');
@@ -349,15 +349,15 @@ const ReasonModal: React.FC<{
             return;
         }
         setIsLoading(true);
-        
-        const url = isEditMode ? `http://localhost:3001/api/downtime/reasons/${reasonToEdit.id}` : 'http://localhost:3001/api/downtime/reasons';
+
+        const url = isEditMode ? `https://impla-backend.onrender.com/api/downtime/reasons/${reasonToEdit.id}` : 'https://impla-backend.onrender.com/api/downtime/reasons';
         const method = isEditMode ? 'PUT' : 'POST';
-        const body = JSON.stringify({ 
-            codigo, 
-            nombre_causa: nombreCausa, 
-            descripcion, 
-            downtime_reasons_categories_id: categoriaId, 
-            is_active: isActive 
+        const body = JSON.stringify({
+            codigo,
+            nombre_causa: nombreCausa,
+            descripcion,
+            downtime_reasons_categories_id: categoriaId,
+            is_active: isActive
         });
 
         try {
@@ -397,7 +397,7 @@ const ReasonModal: React.FC<{
                     </div>
                     <FormInput id="codigo" label="Código" value={codigo} onChange={e => setCodigo(e.target.value)} required disabled={isLoading} />
                     <FormInput id="nombreCausa" label="Nombre de la Causa" value={nombreCausa} onChange={e => setNombreCausa(e.target.value)} required disabled={isLoading} />
-                     <div>
+                    <div>
                         <label htmlFor="descripcion" className="block text-sm font-medium text-slate-700 mb-1.5">Descripción (Opcional)</label>
                         <textarea id="descripcion" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} disabled={isLoading} className="form-textarea min-h-24 block w-full appearance-none rounded-md border border-slate-300 bg-white px-3 py-2.5 text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors disabled:bg-slate-100"></textarea>
                     </div>
@@ -426,12 +426,12 @@ const CategoryModal: React.FC<{
     const [nombre, setNombre] = useState('');
     const [descripcion, setDescripcion] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string|null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const isEditMode = !!categoryToEdit;
 
-     useEffect(() => {
-        if(isOpen) {
+    useEffect(() => {
+        if (isOpen) {
             setNombre(categoryToEdit?.nombre_categoria || '');
             setDescripcion(categoryToEdit?.descripcion || '');
             setError(null);
@@ -443,7 +443,7 @@ const CategoryModal: React.FC<{
         e.preventDefault();
         setError(null);
         setIsLoading(true);
-        const url = isEditMode ? `http://localhost:3001/api/downtime/categories/${categoryToEdit.id}` : 'http://localhost:3001/api/downtime/categories';
+        const url = isEditMode ? `https://impla-backend.onrender.com/api/downtime/categories/${categoryToEdit.id}` : 'https://impla-backend.onrender.com/api/downtime/categories';
         const method = isEditMode ? 'PUT' : 'POST';
         const body = JSON.stringify({ nombre_categoria: nombre, descripcion });
 
@@ -452,7 +452,7 @@ const CategoryModal: React.FC<{
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'An error occurred.');
             onSuccess();
-        } catch(err) {
+        } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred.');
         } finally {
             setIsLoading(false);
@@ -461,28 +461,28 @@ const CategoryModal: React.FC<{
 
     if (!isOpen) return null;
 
-     return (
+    return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
             <div className="fixed inset-0" onClick={isLoading ? undefined : onClose} aria-hidden="true"></div>
             <form onSubmit={handleSubmit} className="relative w-full max-w-md rounded-xl bg-white shadow-2xl">
-                 <div className="flex items-start justify-between p-6 border-b border-slate-200">
+                <div className="flex items-start justify-between p-6 border-b border-slate-200">
                     <h2 className="text-xl font-bold text-slate-900">{isEditMode ? 'Editar Categoría' : 'Añadir Categoría'}</h2>
                     <button type="button" onClick={onClose} aria-label="Cerrar" className="-mt-2 -mr-2 flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-800" disabled={isLoading}>
                         <span className="material-icons">close</span>
                     </button>
-                 </div>
-                 <div className="p-6 space-y-4">
+                </div>
+                <div className="p-6 space-y-4">
                     <FormInput id="cat-name" label="Nombre de la Categoría" value={nombre} onChange={e => setNombre(e.target.value)} required disabled={isLoading} />
                     <FormInput id="cat-desc" label="Descripción (Opcional)" value={descripcion} onChange={e => setDescripcion(e.target.value)} disabled={isLoading} />
                     {error && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</p>}
-                 </div>
-                 <div className="flex justify-end gap-3 p-4 bg-slate-50 border-t rounded-b-xl">
+                </div>
+                <div className="flex justify-end gap-3 p-4 bg-slate-50 border-t rounded-b-xl">
                     <button type="button" onClick={onClose} disabled={isLoading} className="btn-secondary">Cancelar</button>
                     <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Añadir Categoría')}</button>
                 </div>
             </form>
         </div>
-     )
+    )
 }
 
 const DeleteModalWrapper: React.FC<{
@@ -491,21 +491,21 @@ const DeleteModalWrapper: React.FC<{
     isOpen: boolean,
     onClose: () => void,
     onSuccess: () => void
-}> = ({type, item, isOpen, onClose, onSuccess}) => {
+}> = ({ type, item, isOpen, onClose, onSuccess }) => {
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string|null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const name = type === 'reason' ? (item as DowntimeReason).nombre_causa : (item as Category).nombre_categoria;
     const title = type === 'reason' ? 'Eliminar Causa' : 'Eliminar Categoría';
-    const message = type === 'reason' 
+    const message = type === 'reason'
         ? <>¿Estás seguro de que quieres eliminar la causa <strong>{name}</strong>?</>
         : <>¿Estás seguro de que quieres eliminar la categoría <strong>{name}</strong>? Esta acción fallará si hay causas asociadas a ella.</>
-    
+
     const handleConfirm = async () => {
         setIsLoading(true);
         setError(null);
-        
-        const url = type === 'reason' ? `http://localhost:3001/api/downtime/reasons/${item.id}` : `http://localhost:3001/api/downtime/categories/${item.id}`;
+
+        const url = type === 'reason' ? `https://impla-backend.onrender.com/api/downtime/reasons/${item.id}` : `https://impla-backend.onrender.com/api/downtime/categories/${item.id}`;
         const method = 'DELETE';
 
         try {
@@ -515,14 +515,14 @@ const DeleteModalWrapper: React.FC<{
                 throw new Error(data.message || 'An error occurred.');
             }
             onSuccess();
-        } catch(err) {
+        } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred.');
         } finally {
             setIsLoading(false);
         }
     }
 
-    return <DeleteConfirmationModal 
+    return <DeleteConfirmationModal
         isOpen={isOpen}
         onClose={onClose}
         onConfirm={handleConfirm}
@@ -533,10 +533,10 @@ const DeleteModalWrapper: React.FC<{
     />
 }
 
-const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & {label: string}> = ({label, id, ...props}) => (
+const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, id, ...props }) => (
     <div>
         <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
-        <input 
+        <input
             id={id}
             {...props}
             className="form-input block w-full appearance-none rounded-md border border-slate-300 bg-white px-3 py-2.5 text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors disabled:bg-slate-100 disabled:text-slate-600"

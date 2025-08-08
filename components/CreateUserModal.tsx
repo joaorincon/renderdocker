@@ -13,10 +13,10 @@ interface CreateUserModalProps {
     onCreateUser: (userData: NewUserData) => Promise<any>;
 }
 
-const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & {label: string}> = ({label, id, ...props}) => (
+const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, id, ...props }) => (
     <div>
         <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
-        <input 
+        <input
             id={id}
             {...props}
             className="form-input block w-full appearance-none rounded-md border border-slate-300 bg-white px-3 py-2.5 text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors disabled:bg-slate-50"
@@ -42,7 +42,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onCr
             setIsRolesLoading(true);
             setRolesError(null);
             try {
-                const response = await fetch('http://localhost:3001/api/roles');
+                const response = await fetch('https://impla-backend.onrender.com/api/roles');
                 if (!response.ok) {
                     throw new Error('No se pudieron cargar los roles.');
                 }
@@ -138,8 +138,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onCr
                             disabled={isLoading}
                         />
                         <div>
-                             <label htmlFor="rol" className="block text-sm font-medium text-slate-700 mb-1.5">Rol</label>
-                             <select
+                            <label htmlFor="rol" className="block text-sm font-medium text-slate-700 mb-1.5">Rol</label>
+                            <select
                                 id="rol"
                                 value={rol}
                                 onChange={(e) => setRol(e.target.value)}
@@ -156,8 +156,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onCr
                                         <option key={roleName} value={roleName}>{roleName}</option>
                                     ))
                                 )}
-                             </select>
-                             {rolesError && <p className="text-xs text-red-600 mt-1">{rolesError}</p>}
+                            </select>
+                            {rolesError && <p className="text-xs text-red-600 mt-1">{rolesError}</p>}
                         </div>
                         <div>
                             <label htmlFor="pin" className="block text-sm font-medium text-slate-700 mb-1.5">Contraseña / PIN</label>

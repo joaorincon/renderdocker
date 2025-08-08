@@ -28,20 +28,20 @@ const CreateProductionOrderPage: React.FC<CreateProductionOrderPageProps> = ({ o
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    
+
     useEffect(() => {
         const fetchProducts = async () => {
             setIsLoading(true);
             setError(null);
             try {
-                const response = await fetch('http://localhost:3001/api/products');
+                const response = await fetch('https://impla-backend.onrender.com/api/products');
                 if (!response.ok) {
                     throw new Error('No se pudieron cargar los productos.');
                 }
                 const data: Product[] = await response.json();
                 setProducts(data);
             } catch (err) {
-                 setError(err instanceof Error ? err.message : 'Ocurrió un error inesperado.');
+                setError(err instanceof Error ? err.message : 'Ocurrió un error inesperado.');
             } finally {
                 setIsLoading(false);
             }

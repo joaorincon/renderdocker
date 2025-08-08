@@ -18,12 +18,12 @@ interface DowntimeReason {
 }
 
 interface UnproductiveCausePageProps {
-  task: TaskData;
-  onBack: () => void;
-  onLogout: () => void;
-  onRegisterUnproductiveCause: (taskId: string, cause: string, observations: string) => void;
-  onChangePassword: () => void;
-  currentUser: UserInfo | null;
+    task: TaskData;
+    onBack: () => void;
+    onLogout: () => void;
+    onRegisterUnproductiveCause: (taskId: string, cause: string, observations: string) => void;
+    onChangePassword: () => void;
+    currentUser: UserInfo | null;
 }
 
 const UnproductiveCausePage: React.FC<UnproductiveCausePageProps> = ({ task, onBack, onLogout, onRegisterUnproductiveCause, onChangePassword, currentUser }) => {
@@ -50,7 +50,7 @@ const UnproductiveCausePage: React.FC<UnproductiveCausePageProps> = ({ task, onB
             setIsLoading(true);
             setError(null);
             try {
-                const response = await fetch('http://localhost:3001/api/downtime/reasons');
+                const response = await fetch('https://impla-backend.onrender.com/api/downtime/reasons');
                 if (!response.ok) {
                     throw new Error('No se pudieron cargar las causas de inactividad.');
                 }
@@ -69,8 +69,8 @@ const UnproductiveCausePage: React.FC<UnproductiveCausePageProps> = ({ task, onB
                     icon: getIconForCategory(categoryName),
                     subCauses: groupedByCategory[categoryName].sort(),
                 }));
-                
-                setCauseCategories(formattedCategories.sort((a,b) => a.name.localeCompare(b.name)));
+
+                setCauseCategories(formattedCategories.sort((a, b) => a.name.localeCompare(b.name)));
 
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Ocurrió un error inesperado.');
@@ -93,7 +93,7 @@ const UnproductiveCausePage: React.FC<UnproductiveCausePageProps> = ({ task, onB
         setSelectedSubCause(subCause);
         setIsModalOpen(false);
     };
-    
+
     const handleCloseModal = () => {
         setIsModalOpen(false);
         // Do not reset category selection on close
@@ -107,9 +107,9 @@ const UnproductiveCausePage: React.FC<UnproductiveCausePageProps> = ({ task, onB
         const cause = selectedSubCause;
         onRegisterUnproductiveCause(task.id, cause, observations);
     };
-    
+
     const openModalForSelectedCategory = () => {
-        if(selectedCategory) {
+        if (selectedCategory) {
             setIsModalOpen(true);
         }
     }
@@ -125,14 +125,14 @@ const UnproductiveCausePage: React.FC<UnproductiveCausePageProps> = ({ task, onB
             return <p className="text-slate-500">No hay categorías de inactividad configuradas.</p>;
         }
         return (
-             <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                 {causeCategories.map((category) => (
-                   <CategoryButton 
+                    <CategoryButton
                         key={category.name}
                         category={category}
                         isSelected={selectedCategory?.name === category.name}
                         onClick={() => handleCategoryClick(category)}
-                   />
+                    />
                 ))}
             </div>
         )
@@ -144,7 +144,7 @@ const UnproductiveCausePage: React.FC<UnproductiveCausePageProps> = ({ task, onB
             <main className="flex flex-1 justify-center py-8 px-4">
                 <div className="layout-content-container flex w-full max-w-2xl flex-col rounded-xl bg-white p-6 shadow-lg md:p-8">
                     <h1 className="mb-6 text-3xl font-bold leading-tight tracking-tight text-slate-900">Registrar Causa Improductiva</h1>
-                    
+
                     <div className="mb-6 grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                         <InfoField label="Orden Fab." value={task.id} />
                         <InfoField label="Máquina" value={task.equipment} />
@@ -154,18 +154,18 @@ const UnproductiveCausePage: React.FC<UnproductiveCausePageProps> = ({ task, onB
 
                     <h2 className="mb-4 text-xl font-semibold leading-tight tracking-tight text-slate-800">1. Seleccione una Categoría</h2>
                     {renderCategoryButtons()}
-                    
+
                     {selectedSubCause && selectedCategory && (
                         <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
                             <h2 className="text-xl font-semibold leading-tight tracking-tight text-slate-800 mb-2">2. Causa Seleccionada</h2>
                             <div className="flex items-center gap-2 text-blue-800">
-                                 <span className={`material-icons text-xl`}>{selectedCategory.icon}</span>
-                                 <p className="font-medium">
+                                <span className={`material-icons text-xl`}>{selectedCategory.icon}</span>
+                                <p className="font-medium">
                                     {selectedCategory.name} &gt; <span className="font-bold">{selectedSubCause}</span>
-                                 </p>
+                                </p>
                             </div>
-                            <button 
-                                onClick={openModalForSelectedCategory} 
+                            <button
+                                onClick={openModalForSelectedCategory}
                                 className="mt-2 text-sm font-semibold text-blue-600 hover:underline"
                             >
                                 Cambiar selección
@@ -187,7 +187,7 @@ const UnproductiveCausePage: React.FC<UnproductiveCausePageProps> = ({ task, onB
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="mt-4 flex flex-col justify-end gap-3 sm:flex-row">
                         <button onClick={onBack} className="flex h-11 min-w-[84px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-md bg-white px-4 text-sm font-semibold leading-normal tracking-[0.015em] text-slate-700 ring-1 ring-slate-300 transition-colors duration-150 hover:bg-slate-50">
                             <span className="truncate">Cancelar</span>
@@ -200,7 +200,7 @@ const UnproductiveCausePage: React.FC<UnproductiveCausePageProps> = ({ task, onB
                 </div>
 
                 {isModalOpen && selectedCategory && (
-                    <SubCauseModal 
+                    <SubCauseModal
                         category={selectedCategory}
                         onSelect={handleSubCauseSelect}
                         onClose={handleCloseModal}
@@ -211,14 +211,14 @@ const UnproductiveCausePage: React.FC<UnproductiveCausePageProps> = ({ task, onB
     );
 };
 
-const InfoField: React.FC<{label: string, value: string}> = ({ label, value }) => (
+const InfoField: React.FC<{ label: string, value: string }> = ({ label, value }) => (
     <div className="flex flex-col">
         <label className="pb-1.5 text-sm font-medium leading-normal text-slate-700">{label}</label>
-        <input className="form-input h-11 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-md border border-slate-300 bg-slate-50 p-3 text-sm font-normal leading-normal text-slate-900 placeholder:text-slate-400 focus:outline-0" disabled value={value}/>
+        <input className="form-input h-11 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-md border border-slate-300 bg-slate-50 p-3 text-sm font-normal leading-normal text-slate-900 placeholder:text-slate-400 focus:outline-0" disabled value={value} />
     </div>
 );
 
-const CategoryButton: React.FC<{category: CauseCategory, isSelected: boolean, onClick: () => void}> = ({ category, isSelected, onClick }) => {
+const CategoryButton: React.FC<{ category: CauseCategory, isSelected: boolean, onClick: () => void }> = ({ category, isSelected, onClick }) => {
     const selectedClasses = 'bg-blue-50 border-blue-600 ring-2 ring-blue-500';
     return (
         <button onClick={onClick} className={`flex h-28 flex-col items-center justify-center gap-2 rounded-lg border p-2 text-center transition-colors duration-150 hover:border-blue-500 hover:bg-slate-50 focus:outline-none ${isSelected ? selectedClasses : 'border-slate-300'}`}>
@@ -235,9 +235,9 @@ const SubCauseModal: React.FC<{
 }> = ({ category, onSelect, onClose }) => {
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
-           if (event.key === 'Escape') {
-              onClose();
-           }
+            if (event.key === 'Escape') {
+                onClose();
+            }
         };
         window.addEventListener('keydown', handleEsc);
         return () => {
@@ -260,7 +260,7 @@ const SubCauseModal: React.FC<{
                 </div>
                 <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {category.subCauses.map(subCause => (
-                        <button 
+                        <button
                             key={subCause}
                             onClick={() => onSelect(subCause)}
                             className="flex h-24 flex-col items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-center text-sm font-medium text-slate-700 transition-colors hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"

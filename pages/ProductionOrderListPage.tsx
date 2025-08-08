@@ -42,7 +42,7 @@ const ProductionOrderListPage: React.FC<ProductionOrderListPageProps> = ({ onBac
             setIsLoading(true);
             setError(null);
             try {
-                const response = await fetch('http://localhost:3001/api/production-orders');
+                const response = await fetch('https://impla-backend.onrender.com/api/production-orders');
                 if (!response.ok) {
                     throw new Error('No se pudieron cargar las órdenes de producción.');
                 }

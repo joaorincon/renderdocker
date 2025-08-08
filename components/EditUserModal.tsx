@@ -63,7 +63,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onSave, 
     const [rolesError, setRolesError] = useState<string | null>(null);
 
     const canChangePassword = currentUserRole === 'root' || currentUserRole === 'admin_planta';
-    
+
     const isEditingSelf = user?.codigo_operario === currentUser?.codigo_operario;
     const isSelfRoleChangeForbidden = isEditingSelf && (currentUser?.role === 'root' || currentUser?.role === 'admin_planta');
 
@@ -71,7 +71,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onSave, 
         setIsRolesLoading(true);
         setRolesError(null);
         try {
-            const response = await fetch('http://localhost:3001/api/roles');
+            const response = await fetch('https://impla-backend.onrender.com/api/roles');
             if (!response.ok) throw new Error('No se pudieron cargar los roles.');
             const data: string[] = await response.json();
             const filteredRoles = data.filter(roleName => roleName.toLowerCase() !== 'root');
@@ -82,7 +82,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onSave, 
             setIsRolesLoading(false);
         }
     };
-    
+
     useEffect(() => {
         if (isOpen) {
             setError(null);
@@ -97,12 +97,12 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onSave, 
             fetchRoles();
         }
     }, [isOpen, user]);
-    
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!user) return;
         setError(null);
-        
+
         if (showChangePassword && pin && pin.length < 3) {
             setError('La nueva contraseña debe tener al menos 3 caracteres.');
             return;
@@ -121,9 +121,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onSave, 
             setIsLoading(false);
         }
     };
-    
+
     if (!isOpen || !user) return null;
-    
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div className="fixed inset-0" onClick={isLoading ? undefined : onClose} aria-hidden="true"></div>
@@ -139,8 +139,8 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onSave, 
                         <FormInputDisplay label="Nombre Completo" value={user.nombre_completo} />
                         <FormInputDisplay label="Código de Operario" value={user.codigo_operario} />
                         <div>
-                             <label htmlFor="rol-edit" className="block text-sm font-medium text-slate-700 mb-1.5">Rol</label>
-                             <select
+                            <label htmlFor="rol-edit" className="block text-sm font-medium text-slate-700 mb-1.5">Rol</label>
+                            <select
                                 id="rol-edit"
                                 value={rol}
                                 onChange={(e) => setRol(e.target.value)}
@@ -157,15 +157,15 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onSave, 
                                         <option key={roleName} value={roleName}>{roleName}</option>
                                     ))
                                 )}
-                             </select>
-                             {rolesError && <p className="text-xs text-red-600 mt-1">{rolesError}</p>}
-                             {isSelfRoleChangeForbidden && <p className="text-xs text-slate-500 mt-1">Los usuarios Root y Admin Planta no pueden cambiar su propio rol.</p>}
+                            </select>
+                            {rolesError && <p className="text-xs text-red-600 mt-1">{rolesError}</p>}
+                            {isSelfRoleChangeForbidden && <p className="text-xs text-slate-500 mt-1">Los usuarios Root y Admin Planta no pueden cambiar su propio rol.</p>}
                         </div>
-                         <div>
+                        <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1.5">Estado Activo</label>
                             <ToggleSwitch checked={isActive} onChange={setIsActive} disabled={isLoading} />
-                         </div>
-                         {canChangePassword && (
+                        </div>
+                        {canChangePassword && (
                             <div className="pt-2">
                                 {!showChangePassword ? (
                                     <button

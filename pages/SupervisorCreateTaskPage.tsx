@@ -57,31 +57,31 @@ const SupervisorCreateTaskPage: React.FC<SupervisorCreateTaskPageProps> = ({ onB
             setEquipmentError(null);
             try {
                 // Fetch only active machines
-                const response = await fetch('http://localhost:3001/api/machines?activeOnly=true');
+                const response = await fetch('https://impla-backend.onrender.com/api/machines?activeOnly=true');
                 if (!response.ok) {
                     throw new Error('No se pudieron cargar los equipos.');
                 }
                 const data: MachineOption[] = await response.json();
                 setEquipmentOptions(data);
             } catch (err) {
-                 setEquipmentError(err instanceof Error ? err.message : 'Ocurrió un error inesperado.');
+                setEquipmentError(err instanceof Error ? err.message : 'Ocurrió un error inesperado.');
             } finally {
                 setIsLoadingEquipment(false);
             }
         };
-        
+
         const fetchProductionOrders = async () => {
             setIsLoadingOrders(true);
             setOrdersError(null);
             try {
-                const response = await fetch('http://localhost:3001/api/production-orders/selectable');
-                 if (!response.ok) {
+                const response = await fetch('https://impla-backend.onrender.com/api/production-orders/selectable');
+                if (!response.ok) {
                     throw new Error('No se pudieron cargar las órdenes de producción.');
                 }
                 const data: ProductionOrderInfo[] = await response.json();
                 setProductionOrders(data);
             } catch (err) {
-                 setOrdersError(err instanceof Error ? err.message : 'Ocurrió un error inesperado.');
+                setOrdersError(err instanceof Error ? err.message : 'Ocurrió un error inesperado.');
             } finally {
                 setIsLoadingOrders(false);
             }
@@ -91,7 +91,7 @@ const SupervisorCreateTaskPage: React.FC<SupervisorCreateTaskPageProps> = ({ onB
             setIsLoadingOperators(true);
             setOperatorsError(null);
             try {
-                const response = await fetch('http://localhost:3001/api/users/operators');
+                const response = await fetch('https://impla-backend.onrender.com/api/users/operators');
                 if (!response.ok) {
                     throw new Error('No se pudieron cargar los operarios.');
                 }
@@ -108,7 +108,7 @@ const SupervisorCreateTaskPage: React.FC<SupervisorCreateTaskPageProps> = ({ onB
         fetchProductionOrders();
         fetchOperators();
     }, []);
-    
+
     const fetchOperations = async (productId: number | undefined) => {
         if (!productId) {
             setOperationOptions([]);
@@ -118,15 +118,15 @@ const SupervisorCreateTaskPage: React.FC<SupervisorCreateTaskPageProps> = ({ onB
         setIsLoadingOperations(true);
         setOperationsError(null);
         try {
-            const response = await fetch(`http://localhost:3001/api/products/${productId}/operations`);
+            const response = await fetch(`https://impla-backend.onrender.com/api/products/${productId}/operations`);
             if (!response.ok) {
                 throw new Error('No se pudieron cargar las operaciones.');
             }
             const data: Operation[] = await response.json();
             setOperationOptions(data);
         } catch (err) {
-             setOperationsError(err instanceof Error ? err.message : 'Ocurrió un error inesperado.');
-             setOperationOptions([]);
+            setOperationsError(err instanceof Error ? err.message : 'Ocurrió un error inesperado.');
+            setOperationOptions([]);
         } finally {
             setIsLoadingOperations(false);
         }

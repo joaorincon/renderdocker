@@ -78,7 +78,7 @@ const App: React.FC = () => {
     const fetchTasks = async () => {
         // Can add loading state if desired
         try {
-            const response = await fetch('http://localhost:3001/api/tasks');
+            const response = await fetch('https://impla-backend.onrender.com/api/tasks');
             if (!response.ok) {
                 throw new Error('No se pudieron cargar las tareas.');
             }
@@ -113,7 +113,7 @@ const App: React.FC = () => {
         setIsLoggingIn(true);
         setLoginError(null);
         try {
-            const response = await fetch('${API_BASE_URL}/prueba1postgre/api/login', {
+            const response = await fetch('https://impla-backend.onrender.com/prueba1postgre/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -185,7 +185,7 @@ const App: React.FC = () => {
             return Promise.reject(new Error('No hay un usuario conectado.'));
         }
         try {
-            const response = await fetch('http://localhost:3001/api/users/change-password', {
+            const response = await fetch('https://impla-backend.onrender.com/api/users/change-password', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -288,7 +288,7 @@ const App: React.FC = () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:3001/api/tasks/${task.db_id}/status`, {
+            const response = await fetch(`https://impla-backend.onrender.com/api/tasks/${task.db_id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ estado: 'EN_PROGRESO' }),
@@ -339,7 +339,7 @@ const App: React.FC = () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:3001/api/tasks/${task.db_id}/status`, {
+            const response = await fetch(`https://impla-backend.onrender.com/api/tasks/${task.db_id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ estado: 'PAUSADA' }),
@@ -376,7 +376,7 @@ const App: React.FC = () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:3001/api/tasks/${task.db_id}/status`, {
+            const response = await fetch(`https://impla-backend.onrender.com/api/tasks/${task.db_id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ estado: 'EN_PROGRESO' }),
@@ -447,7 +447,7 @@ const App: React.FC = () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:3001/api/tasks/${task.db_id}/status`, {
+            const response = await fetch(`https://impla-backend.onrender.com/api/tasks/${task.db_id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ estado: 'FINALIZADA' }),
@@ -503,7 +503,7 @@ const App: React.FC = () => {
             });
             const newId = `${prefix}-${(maxIdNum + 1).toString().padStart(3, '0')}`;
 
-            const response = await fetch('http://localhost:3001/api/tasks', {
+            const response = await fetch('https://impla-backend.onrender.com/api/tasks', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -596,7 +596,7 @@ const App: React.FC = () => {
         // isSubmitting is set by the caller (the modal's onConfirm)
 
         try {
-            const response = await fetch('http://localhost:3001/api/production-orders', {
+            const response = await fetch('https://impla-backend.onrender.com/api/production-orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -36,7 +36,7 @@ const MachineManagementPage: React.FC<{
     const [machineToEdit, setMachineToEdit] = useState<Machine | null>(null);
     const [machineToDelete, setMachineToDelete] = useState<Machine | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
+
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -46,7 +46,7 @@ const MachineManagementPage: React.FC<{
         setIsLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:3001/api/machines');
+            const response = await fetch('https://impla-backend.onrender.com/api/machines');
             if (!response.ok) throw new Error('Failed to fetch machines.');
             const data: Machine[] = await response.json();
             setMachines(data.sort((a, b) => a.nombre.localeCompare(b.nombre)));
@@ -72,7 +72,7 @@ const MachineManagementPage: React.FC<{
     };
 
     const handleSaveMachine = async (machineData: Omit<Machine, 'id'> & { id?: number }) => {
-        const url = machineData.id ? `http://localhost:3001/api/machines/${machineData.id}` : 'http://localhost:3001/api/machines';
+        const url = machineData.id ? `https://impla-backend.onrender.com/api/machines/${machineData.id}` : 'https://impla-backend.onrender.com/api/machines';
         const method = machineData.id ? 'PUT' : 'POST';
 
         try {
@@ -92,16 +92,16 @@ const MachineManagementPage: React.FC<{
             return Promise.reject(err);
         }
     };
-    
-     const handleConfirmDelete = async () => {
+
+    const handleConfirmDelete = async () => {
         if (!machineToDelete) return;
         setIsDeleting(true);
         setDeleteError(null);
         try {
-            const response = await fetch(`http://localhost:3001/api/machines/${machineToDelete.id}`, { method: 'DELETE' });
+            const response = await fetch(`https://impla-backend.onrender.com/api/machines/${machineToDelete.id}`, { method: 'DELETE' });
             if (!response.ok && response.status !== 204) {
-                 const errorData = await response.json();
-                 throw new Error(errorData.message || 'Error al eliminar la máquina.');
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al eliminar la máquina.');
             }
             setMachineToDelete(null);
             fetchMachines(); // Refresh data
@@ -116,7 +116,7 @@ const MachineManagementPage: React.FC<{
         if (isLoading) return <div className="text-center p-8 text-slate-600">Cargando máquinas...</div>;
         if (error) return <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg" role="alert">{error}</div>;
         if (machines.length === 0) return <div className="text-center p-8 text-slate-500">No hay máquinas registradas.</div>;
-        
+
         return (
             <div className="overflow-x-auto relative">
                 <table className="w-full text-sm text-left text-slate-500">
@@ -161,10 +161,10 @@ const MachineManagementPage: React.FC<{
                 <main className="flex-1 justify-center py-8 px-4 sm:px-6 md:px-10">
                     <div className="max-w-5xl mx-auto">
                         <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
-                             <div className="flex justify-between items-center mb-6">
+                            <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-xl font-bold text-slate-900">Lista de Máquinas y Equipos</h2>
                                 {canManageMachines && (
-                                    <button 
+                                    <button
                                         onClick={() => handleOpenModal()}
                                         className="flex items-center justify-center gap-2 rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
                                         <span className="material-icons text-lg">add</span>
@@ -213,10 +213,10 @@ const ToggleSwitch: React.FC<{ checked: boolean; onChange: (checked: boolean) =>
     </button>
 );
 
-const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & {label: string}> = ({label, id, ...props}) => (
+const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, id, ...props }) => (
     <div>
         <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
-        <input 
+        <input
             id={id}
             {...props}
             className="form-input block w-full appearance-none rounded-md border border-slate-300 bg-white px-3 py-2.5 text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors disabled:bg-slate-50"
