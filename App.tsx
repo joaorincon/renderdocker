@@ -113,7 +113,7 @@ const App: React.FC = () => {
         setIsLoggingIn(true);
         setLoginError(null);
         try {
-            const response = await fetch('https://impla-backend.onrender.com/prueba1postgre/api/login', {
+            const response = await fetch('https://impla-backend.onrender.com/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
