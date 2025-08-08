@@ -113,7 +113,7 @@ const App: React.FC = () => {
         setIsLoggingIn(true);
         setLoginError(null);
         try {
-            const response = await fetch('postgresql://prueba1postgre_user:cTzmDorbN8BP4qJW1J9kWWrHuqqlhsRh@dpg-d29o237diees73d0j9mg-a/prueba1postgre/api/login', {
+            const response = await fetch('${API_BASE_URL}/prueba1postgre/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
