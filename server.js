@@ -30,7 +30,15 @@ if (missingEnvVars.length > 0) {
 // --- End of new code ---
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: 'https://impla-frontend.onrender.com', // ¡Permite explícitamente tu frontend!
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true, // Si necesitas enviar cookies o cabeceras de autorización
+  optionsSuccessStatus: 204 // Para las peticiones preflight OPTIONS
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Habilita las respuestas preflight para todas las rutas
 app.use(express.json());
 
 // --- AÑADE ESTAS LÍNEAS PARA DEPURAR ---
