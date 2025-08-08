@@ -23,15 +23,24 @@ const requiredEnvVars = ['DB_USER', 'DB_HOST', 'DB_DATABASE', 'DB_PASSWORD', 'DB
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
-    console.error(`\nERROR: The following required environment variables are missing from your .env file: ${missingEnvVars.join(', ')}`);
-    console.error('Please create or complete the .env file in the project root and restart the server.\n');
-    process.exit(1); // Exit the process with an error code
+  console.error(`\nERROR: The following required environment variables are missing from your .env file: ${missingEnvVars.join(', ')}`);
+  console.error('Please create or complete the .env file in the project root and restart the server.\n');
+  process.exit(1); // Exit the process with an error code
 }
 // --- End of new code ---
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// --- AÑADE ESTAS LÍNEAS PARA DEPURAR ---
+console.log("--- DEBUGGING ENVIRONMENT VARIABLES ---");
+console.log("DB_HOST from env:", process.env.DB_HOST);
+console.log("DB_USER from env:", process.env.DB_USER);
+console.log("DB_DATABASE from env:", process.env.DB_DATABASE);
+console.log("DB_PORT from env:", process.env.DB_PORT);
+console.log("--- END DEBUGGING ---");
+// -----------------------------------------
 
 // DB Connection Pool
 // It's crucial to use environment variables for database credentials.
@@ -78,9 +87,9 @@ app.post('/api/login', async (req, res) => {
     // Passwords in `password_hash` column MUST be hashed using bcrypt.
     // If they are plain text, this comparison will always fail.
     const isPasswordValid = await bcrypt.compare(pin, user.password_hash);
-    
+
     if (!isPasswordValid) {
-        return res.status(401).json({ message: 'Credenciales inválidas.' });
+      return res.status(401).json({ message: 'Credenciales inválidas.' });
     }
 
     // Determine role for the frontend
@@ -126,210 +135,210 @@ app.get('/api/users', async (req, res) => {
 });
 
 app.post('/api/users', async (req, res) => {
-    const { nombre_completo, codigo_operario, rol, pin } = req.body;
+  const { nombre_completo, codigo_operario, rol, pin } = req.body;
 
-    if (!nombre_completo || !codigo_operario || !rol || !pin) {
-        return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
+  if (!nombre_completo || !codigo_operario || !rol || !pin) {
+    return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
+  }
+
+  if (pin.length < 3) {
+    return res.status(400).json({ message: 'La contraseña / PIN debe tener al menos 3 caracteres.' });
+  }
+
+  try {
+    // Check if user already exists
+    const existingUser = await pool.query('SELECT id FROM produccion.users WHERE codigo_operario = $1', [codigo_operario]);
+    if (existingUser.rows.length > 0) {
+      return res.status(409).json({ message: 'El código de operario ya existe.' });
     }
 
-    if (pin.length < 3) {
-        return res.status(400).json({ message: 'La contraseña / PIN debe tener al menos 3 caracteres.' });
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(pin, salt);
+
+    // Map role name to role_id (assuming 1: operario, 2: supervisor from a `maestros.roles` table)
+    const roleResult = await pool.query('SELECT id FROM maestros.roles WHERE nombre_rol ILIKE $1', [rol]);
+    if (roleResult.rows.length === 0) {
+      return res.status(400).json({ message: 'El rol especificado no es válido.' });
     }
+    const role_id = roleResult.rows[0].id;
 
-    try {
-        // Check if user already exists
-        const existingUser = await pool.query('SELECT id FROM produccion.users WHERE codigo_operario = $1', [codigo_operario]);
-        if (existingUser.rows.length > 0) {
-            return res.status(409).json({ message: 'El código de operario ya existe.' });
-        }
-
-        // Hash the password
-        const salt = await bcrypt.genSalt(10);
-        const password_hash = await bcrypt.hash(pin, salt);
-
-        // Map role name to role_id (assuming 1: operario, 2: supervisor from a `maestros.roles` table)
-        const roleResult = await pool.query('SELECT id FROM maestros.roles WHERE nombre_rol ILIKE $1', [rol]);
-        if (roleResult.rows.length === 0) {
-            return res.status(400).json({ message: 'El rol especificado no es válido.' });
-        }
-        const role_id = roleResult.rows[0].id;
-
-        // Insert new user
-        const insertQuery = `
+    // Insert new user
+    const insertQuery = `
             INSERT INTO produccion.users (nombre_completo, codigo_operario, role_id, password_hash)
             VALUES ($1, $2, $3, $4)
             RETURNING id, nombre_completo, codigo_operario, is_active;
         `;
-        const newUserResult = await pool.query(insertQuery, [nombre_completo, codigo_operario, role_id, password_hash]);
-        const newUser = {
-            ...newUserResult.rows[0],
-            nombre_rol: rol
-        };
+    const newUserResult = await pool.query(insertQuery, [nombre_completo, codigo_operario, role_id, password_hash]);
+    const newUser = {
+      ...newUserResult.rows[0],
+      nombre_rol: rol
+    };
 
-        res.status(201).json(newUser);
+    res.status(201).json(newUser);
 
-    } catch (error) {
-        console.error('Error creating user:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al crear el usuario.' });
-    }
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al crear el usuario.' });
+  }
 });
 
 // NOTE: This route MUST come before /api/users/:id to be matched correctly
 app.put('/api/users/change-password', async (req, res) => {
-    const { codigo_operario, currentPin, newPin } = req.body;
+  const { codigo_operario, currentPin, newPin } = req.body;
 
-    if (!codigo_operario || !currentPin || !newPin) {
-        return res.status(400).json({ message: 'Se requieren el código de operario, el PIN actual y el PIN nuevo.' });
+  if (!codigo_operario || !currentPin || !newPin) {
+    return res.status(400).json({ message: 'Se requieren el código de operario, el PIN actual y el PIN nuevo.' });
+  }
+  if (newPin.length < 3) {
+    return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 3 caracteres.' });
+  }
+
+  try {
+    // Find user by codigo_operario
+    const userQuery = 'SELECT id, password_hash FROM produccion.users WHERE codigo_operario = $1';
+    const { rows } = await pool.query(userQuery, [codigo_operario]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
-    if (newPin.length < 3) {
-        return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 3 caracteres.' });
+    const user = rows[0];
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(currentPin, user.password_hash);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'El PIN actual es incorrecto.' });
     }
 
-    try {
-        // Find user by codigo_operario
-        const userQuery = 'SELECT id, password_hash FROM produccion.users WHERE codigo_operario = $1';
-        const { rows } = await pool.query(userQuery, [codigo_operario]);
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const newPasswordHash = await bcrypt.hash(newPin, salt);
 
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Usuario no encontrado.' });
-        }
-        const user = rows[0];
+    // Update password in DB
+    const updateQuery = 'UPDATE produccion.users SET password_hash = $1 WHERE id = $2';
+    await pool.query(updateQuery, [newPasswordHash, user.id]);
 
-        // Verify current password
-        const isPasswordValid = await bcrypt.compare(currentPin, user.password_hash);
-        if (!isPasswordValid) {
-            return res.status(401).json({ message: 'El PIN actual es incorrecto.' });
-        }
+    res.status(200).json({ message: 'Contraseña actualizada correctamente.' });
 
-        // Hash new password
-        const salt = await bcrypt.genSalt(10);
-        const newPasswordHash = await bcrypt.hash(newPin, salt);
-
-        // Update password in DB
-        const updateQuery = 'UPDATE produccion.users SET password_hash = $1 WHERE id = $2';
-        await pool.query(updateQuery, [newPasswordHash, user.id]);
-
-        res.status(200).json({ message: 'Contraseña actualizada correctamente.' });
-
-    } catch (error) {
-        console.error('Error changing password:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al cambiar la contraseña.' });
-    }
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al cambiar la contraseña.' });
+  }
 });
 
 app.put('/api/users/:id', async (req, res) => {
-    const { id } = req.params;
-    const { rol, is_active, pin, updated_by_id } = req.body;
+  const { id } = req.params;
+  const { rol, is_active, pin, updated_by_id } = req.body;
 
-    if (!id || isNaN(parseInt(id, 10))) {
-        return res.status(400).json({ message: 'Se requiere un ID de usuario válido.' });
+  if (!id || isNaN(parseInt(id, 10))) {
+    return res.status(400).json({ message: 'Se requiere un ID de usuario válido.' });
+  }
+
+  if (typeof rol !== 'string' || typeof is_active !== 'boolean') {
+    return res.status(400).json({ message: 'Los campos "rol" y "is_active" son obligatorios y deben tener el formato correcto.' });
+  }
+
+  if (!updated_by_id) {
+    return res.status(400).json({ message: 'No se ha proporcionado el ID del usuario que realiza la modificación.' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    await client.query("SELECT pg_catalog.set_config('session.user_id', $1, true)", [updated_by_id]);
+
+    const roleResult = await client.query('SELECT id FROM maestros.roles WHERE nombre_rol ILIKE $1', [rol]);
+    if (roleResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ message: 'El rol especificado no es válido.' });
+    }
+    const role_id = roleResult.rows[0].id;
+
+    const queryParts = ['role_id = $1', 'is_active = $2'];
+    const queryParams = [role_id, is_active];
+    let paramIndex = 3;
+
+    if (pin && typeof pin === 'string' && pin.trim() !== '') {
+      if (pin.length < 3) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 3 caracteres.' });
+      }
+      const salt = await bcrypt.genSalt(10);
+      const password_hash = await bcrypt.hash(pin, salt);
+      queryParts.push(`password_hash = $${paramIndex}`);
+      queryParams.push(password_hash);
+      paramIndex++;
     }
 
-    if (typeof rol !== 'string' || typeof is_active !== 'boolean') {
-        return res.status(400).json({ message: 'Los campos "rol" y "is_active" son obligatorios y deben tener el formato correcto.' });
-    }
-    
-    if (!updated_by_id) {
-        return res.status(400).json({ message: 'No se ha proporcionado el ID del usuario que realiza la modificación.' });
-    }
-    
-    const client = await pool.connect();
-
-    try {
-        await client.query('BEGIN');
-        await client.query("SELECT pg_catalog.set_config('session.user_id', $1, true)", [updated_by_id]);
-
-        const roleResult = await client.query('SELECT id FROM maestros.roles WHERE nombre_rol ILIKE $1', [rol]);
-        if (roleResult.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ message: 'El rol especificado no es válido.' });
-        }
-        const role_id = roleResult.rows[0].id;
-        
-        const queryParts = ['role_id = $1', 'is_active = $2'];
-        const queryParams = [role_id, is_active];
-        let paramIndex = 3;
-
-        if (pin && typeof pin === 'string' && pin.trim() !== '') {
-            if (pin.length < 3) {
-                await client.query('ROLLBACK');
-                return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 3 caracteres.' });
-            }
-            const salt = await bcrypt.genSalt(10);
-            const password_hash = await bcrypt.hash(pin, salt);
-            queryParts.push(`password_hash = $${paramIndex}`);
-            queryParams.push(password_hash);
-            paramIndex++;
-        }
-
-        const updateQuery = `
+    const updateQuery = `
             UPDATE produccion.users
             SET ${queryParts.join(', ')}
             WHERE id = $${paramIndex}
             RETURNING id, nombre_completo, codigo_operario, is_active;
         `;
-        queryParams.push(id);
+    queryParams.push(id);
 
-        const updatedUserResult = await client.query(updateQuery, queryParams);
+    const updatedUserResult = await client.query(updateQuery, queryParams);
 
-        if (updatedUserResult.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ message: 'Usuario no encontrado.' });
-        }
-        
-        const updatedUser = {
-            ...updatedUserResult.rows[0],
-            nombre_rol: rol 
-        };
-        
-        await client.query('COMMIT');
-        res.status(200).json(updatedUser);
-
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error updating user:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al actualizar el usuario.' });
-    } finally {
-        client.release();
+    if (updatedUserResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
+
+    const updatedUser = {
+      ...updatedUserResult.rows[0],
+      nombre_rol: rol
+    };
+
+    await client.query('COMMIT');
+    res.status(200).json(updatedUser);
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al actualizar el usuario.' });
+  } finally {
+    client.release();
+  }
 });
 
 app.delete('/api/users/:id', async (req, res) => {
-    const { id } = req.params;
-    const { deleted_by_id } = req.body;
+  const { id } = req.params;
+  const { deleted_by_id } = req.body;
 
-    if (!id || isNaN(parseInt(id, 10))) {
-        return res.status(400).json({ message: 'Se requiere un ID de usuario válido.' });
+  if (!id || isNaN(parseInt(id, 10))) {
+    return res.status(400).json({ message: 'Se requiere un ID de usuario válido.' });
+  }
+
+  if (!deleted_by_id) {
+    return res.status(400).json({ message: 'No se ha proporcionado el ID del usuario que realiza la eliminación.' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    await client.query("SELECT pg_catalog.set_config('session.user_id', $1, true)", [deleted_by_id]);
+
+    const deleteQuery = 'DELETE FROM produccion.users WHERE id = $1 RETURNING id;';
+    const result = await client.query(deleteQuery, [id]);
+
+    if (result.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
-    
-    if (!deleted_by_id) {
-        return res.status(400).json({ message: 'No se ha proporcionado el ID del usuario que realiza la eliminación.' });
-    }
-    
-    const client = await pool.connect();
 
-    try {
-        await client.query('BEGIN');
-        await client.query("SELECT pg_catalog.set_config('session.user_id', $1, true)", [deleted_by_id]);
+    await client.query('COMMIT');
+    res.status(200).json({ message: 'Usuario eliminado correctamente.' });
 
-        const deleteQuery = 'DELETE FROM produccion.users WHERE id = $1 RETURNING id;';
-        const result = await client.query(deleteQuery, [id]);
-
-        if (result.rowCount === 0) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ message: 'Usuario no encontrado.' });
-        }
-        
-        await client.query('COMMIT');
-        res.status(200).json({ message: 'Usuario eliminado correctamente.' });
-
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error deleting user:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al eliminar el usuario.' });
-    } finally {
-        client.release();
-    }
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error deleting user:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al eliminar el usuario.' });
+  } finally {
+    client.release();
+  }
 });
 
 app.get('/api/roles', async (req, res) => {
@@ -492,77 +501,77 @@ app.delete('/api/downtime/reasons/:id', async (req, res) => {
 
 // GET all categories
 app.get('/api/downtime/categories', async (req, res) => {
-    try {
-        const query = 'SELECT id, nombre_categoria, descripcion FROM maestros.downtime_reasons_categories ORDER BY nombre_categoria;';
-        const { rows } = await pool.query(query);
-        res.json(rows);
-    } catch (error) {
-        console.error('Error fetching categories:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al obtener las categorías.' });
-    }
+  try {
+    const query = 'SELECT id, nombre_categoria, descripcion FROM maestros.downtime_reasons_categories ORDER BY nombre_categoria;';
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al obtener las categorías.' });
+  }
 });
 
 // POST a new category
 app.post('/api/downtime/categories', async (req, res) => {
-    const { nombre_categoria, descripcion } = req.body;
-    if (!nombre_categoria) {
-        return res.status(400).json({ message: 'Se requiere el nombre de la categoría.' });
-    }
-    try {
-        const query = `
+  const { nombre_categoria, descripcion } = req.body;
+  if (!nombre_categoria) {
+    return res.status(400).json({ message: 'Se requiere el nombre de la categoría.' });
+  }
+  try {
+    const query = `
             INSERT INTO maestros.downtime_reasons_categories (nombre_categoria, descripcion)
             VALUES ($1, $2)
             RETURNING id, nombre_categoria, descripcion;
         `;
-        const { rows } = await pool.query(query, [nombre_categoria, descripcion]);
-        res.status(201).json(rows[0]);
-    } catch (error) {
-        console.error('Error creating category:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al crear la categoría.' });
-    }
+    const { rows } = await pool.query(query, [nombre_categoria, descripcion]);
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    console.error('Error creating category:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al crear la categoría.' });
+  }
 });
 
 // PUT (update) a category
 app.put('/api/downtime/categories/:id', async (req, res) => {
-    const { id } = req.params;
-    const { nombre_categoria, descripcion } = req.body;
-    if (!nombre_categoria) {
-        return res.status(400).json({ message: 'Se requiere el nombre de la categoría.' });
-    }
-    try {
-        const query = `
+  const { id } = req.params;
+  const { nombre_categoria, descripcion } = req.body;
+  if (!nombre_categoria) {
+    return res.status(400).json({ message: 'Se requiere el nombre de la categoría.' });
+  }
+  try {
+    const query = `
             UPDATE maestros.downtime_reasons_categories
             SET nombre_categoria = $1, descripcion = $2
             WHERE id = $3
             RETURNING id, nombre_categoria, descripcion;
         `;
-        const { rows } = await pool.query(query, [nombre_categoria, descripcion, id]);
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Categoría no encontrada.' });
-        }
-        res.json(rows[0]);
-    } catch (error) {
-        console.error('Error updating category:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al actualizar la categoría.' });
+    const { rows } = await pool.query(query, [nombre_categoria, descripcion, id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Categoría no encontrada.' });
     }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error updating category:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al actualizar la categoría.' });
+  }
 });
 
 // DELETE a category
 app.delete('/api/downtime/categories/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const result = await pool.query('DELETE FROM maestros.downtime_reasons_categories WHERE id = $1', [id]);
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: 'Categoría no encontrada.' });
-        }
-        res.status(204).send();
-    } catch (error) {
-         if (error.code === '23503') { // Foreign key violation
-            return res.status(409).json({ message: 'No se puede eliminar la categoría porque tiene causas de inactividad asociadas. Por favor, reasigne o elimine primero esas causas.' });
-        }
-        console.error('Error deleting category:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al eliminar la categoría.' });
+  const { id } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM maestros.downtime_reasons_categories WHERE id = $1', [id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Categoría no encontrada.' });
     }
+    res.status(204).send();
+  } catch (error) {
+    if (error.code === '23503') { // Foreign key violation
+      return res.status(409).json({ message: 'No se puede eliminar la categoría porque tiene causas de inactividad asociadas. Por favor, reasigne o elimine primero esas causas.' });
+    }
+    console.error('Error deleting category:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al eliminar la categoría.' });
+  }
 });
 
 // === Work Centers (Machines) API ===
@@ -575,11 +584,11 @@ app.get('/api/machines', async (req, res) => {
       SELECT id, codigo, nombre, descripcion, is_active 
       FROM maestros.work_centers
     `;
-    
+
     if (activeOnly === 'true') {
-        query += ' WHERE is_active = true';
+      query += ' WHERE is_active = true';
     }
-    
+
     query += ' ORDER BY nombre ASC;';
 
     const { rows } = await pool.query(query);
@@ -607,7 +616,7 @@ app.post('/api/machines', async (req, res) => {
   } catch (error) {
     console.error('Error creating machine:', error);
     if (error.code === '23505') { // unique constraint violation
-        return res.status(409).json({ message: 'El código de la máquina ya existe.' });
+      return res.status(409).json({ message: 'El código de la máquina ya existe.' });
     }
     res.status(500).json({ message: 'Ocurrió un error interno al crear la máquina.' });
   }
@@ -634,8 +643,8 @@ app.put('/api/machines/:id', async (req, res) => {
     res.json(rows[0]);
   } catch (error) {
     console.error('Error updating machine:', error);
-     if (error.code === '23505') { // unique constraint violation
-        return res.status(409).json({ message: 'El código de la máquina ya existe.' });
+    if (error.code === '23505') { // unique constraint violation
+      return res.status(409).json({ message: 'El código de la máquina ya existe.' });
     }
     res.status(500).json({ message: 'Ocurrió un error interno al actualizar la máquina.' });
   }
@@ -643,53 +652,53 @@ app.put('/api/machines/:id', async (req, res) => {
 
 // DELETE a machine
 app.delete('/api/machines/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const result = await pool.query('DELETE FROM maestros.work_centers WHERE id = $1', [id]);
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: 'Máquina no encontrada.' });
-        }
-        res.status(204).send();
-    } catch (error) {
-        console.error('Error deleting machine:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al eliminar la máquina.' });
+  const { id } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM maestros.work_centers WHERE id = $1', [id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Máquina no encontrada.' });
     }
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting machine:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al eliminar la máquina.' });
+  }
 });
 
 
 // === Products API ===
 app.get('/api/products', async (req, res) => {
-    try {
-        const query = 'SELECT id, nombre FROM maestros.products WHERE is_active = true ORDER BY nombre;';
-        const { rows } = await pool.query(query);
-        res.json(rows);
-    } catch (error) {
-        console.error('Error fetching products:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al obtener los productos.' });
-    }
+  try {
+    const query = 'SELECT id, nombre FROM maestros.products WHERE is_active = true ORDER BY nombre;';
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al obtener los productos.' });
+  }
 });
 
 // === Product Operations API ===
 app.get('/api/products/:productId/operations', async (req, res) => {
-    const { productId } = req.params;
+  const { productId } = req.params;
 
-    if (!productId || isNaN(parseInt(productId, 10))) {
-        return res.status(400).json({ message: 'Se requiere un ID de producto válido.' });
-    }
+  if (!productId || isNaN(parseInt(productId, 10))) {
+    return res.status(400).json({ message: 'Se requiere un ID de producto válido.' });
+  }
 
-    try {
-        const query = `
+  try {
+    const query = `
             SELECT id, nombre_operacion, secuencia, tiempo_estandar_segundos
             FROM maestros.product_operations
             WHERE product_id = $1
             ORDER BY secuencia ASC;
         `;
-        const { rows } = await pool.query(query, [productId]);
-        res.json(rows);
-    } catch (error) {
-        console.error(`Error fetching operations for product ${productId}:`, error);
-        res.status(500).json({ message: 'Ocurrió un error interno al obtener las operaciones del producto.' });
-    }
+    const { rows } = await pool.query(query, [productId]);
+    res.json(rows);
+  } catch (error) {
+    console.error(`Error fetching operations for product ${productId}:`, error);
+    res.status(500).json({ message: 'Ocurrió un error interno al obtener las operaciones del producto.' });
+  }
 });
 
 
@@ -697,61 +706,61 @@ app.get('/api/products/:productId/operations', async (req, res) => {
 
 // POST a new production order
 app.post('/api/production-orders', async (req, res) => {
-    const { orden_numero, product_id, cantidad_requerida, fecha_inicio_programada, created_by_id } = req.body;
+  const { orden_numero, product_id, cantidad_requerida, fecha_inicio_programada, created_by_id } = req.body;
 
-    if (!orden_numero || !product_id || !cantidad_requerida || !fecha_inicio_programada || !created_by_id) {
-        return res.status(400).json({ message: 'Todos los campos son obligatorios para crear la orden.' });
+  if (!orden_numero || !product_id || !cantidad_requerida || !fecha_inicio_programada || !created_by_id) {
+    return res.status(400).json({ message: 'Todos los campos son obligatorios para crear la orden.' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    await client.query("SELECT pg_catalog.set_config('session.user_id', $1, true)", [created_by_id]);
+
+    // Check for duplicate order number
+    const existingOrder = await client.query('SELECT id FROM produccion.production_orders WHERE orden_numero = $1', [orden_numero]);
+    if (existingOrder.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ message: 'El número de orden ya existe.' });
     }
-    
-    const client = await pool.connect();
 
-    try {
-        await client.query('BEGIN');
-        await client.query("SELECT pg_catalog.set_config('session.user_id', $1, true)", [created_by_id]);
-
-        // Check for duplicate order number
-        const existingOrder = await client.query('SELECT id FROM produccion.production_orders WHERE orden_numero = $1', [orden_numero]);
-        if (existingOrder.rows.length > 0) {
-            await client.query('ROLLBACK');
-            return res.status(409).json({ message: 'El número de orden ya existe.' });
-        }
-
-        const insertQuery = `
+    const insertQuery = `
             INSERT INTO produccion.production_orders 
             (orden_numero, product_id, cantidad_requerida, fecha_inicio_programada, created_by_id, estado)
             VALUES ($1, $2, $3, $4, $5, 'Programada')
             RETURNING id, orden_numero, product_id, cantidad_requerida, fecha_inicio_programada, estado, created_by_id, created_at;
         `;
-        
-        const result = await client.query(insertQuery, [orden_numero, product_id, cantidad_requerida, fecha_inicio_programada, created_by_id]);
-        
-        const newOrder = result.rows[0];
 
-        // Fetch product name for response
-        const productResult = await client.query('SELECT nombre FROM maestros.products WHERE id = $1', [newOrder.product_id]);
-        const productName = productResult.rows.length > 0 ? productResult.rows[0].nombre : 'Producto Desconocido';
-        
-        await client.query('COMMIT');
-        
-        res.status(201).json({
-            ...newOrder,
-            product_name: productName
-        });
-        
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error creating production order:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al crear la orden de producción.' });
-    } finally {
-        client.release();
-    }
+    const result = await client.query(insertQuery, [orden_numero, product_id, cantidad_requerida, fecha_inicio_programada, created_by_id]);
+
+    const newOrder = result.rows[0];
+
+    // Fetch product name for response
+    const productResult = await client.query('SELECT nombre FROM maestros.products WHERE id = $1', [newOrder.product_id]);
+    const productName = productResult.rows.length > 0 ? productResult.rows[0].nombre : 'Producto Desconocido';
+
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      ...newOrder,
+      product_name: productName
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error creating production order:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al crear la orden de producción.' });
+  } finally {
+    client.release();
+  }
 });
 
 
 // GET all production orders with details
 app.get('/api/production-orders', async (req, res) => {
-    try {
-        const query = `
+  try {
+    const query = `
             SELECT
                 po.id,
                 po.orden_numero,
@@ -770,19 +779,19 @@ app.get('/api/production-orders', async (req, res) => {
             ORDER BY
                 po.created_at DESC;
         `;
-        const { rows } = await pool.query(query);
-        res.json(rows);
-    } catch (error) {
-        console.error('Error fetching production orders:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al obtener las órdenes de producción.' });
-    }
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching production orders:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al obtener las órdenes de producción.' });
+  }
 });
 
 
 // GET selectable production orders (Programada status) for task creation
 app.get('/api/production-orders/selectable', async (req, res) => {
-    try {
-        const query = `
+  try {
+    const query = `
             SELECT 
                 po.id,
                 po.product_id,
@@ -798,12 +807,12 @@ app.get('/api/production-orders/selectable', async (req, res) => {
             ORDER BY 
                 po.fecha_inicio_programada ASC, po.created_at ASC;
         `;
-        const { rows } = await pool.query(query);
-        res.json(rows);
-    } catch (error) {
-        console.error('Error fetching selectable production orders:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al obtener las órdenes de producción.' });
-    }
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching selectable production orders:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al obtener las órdenes de producción.' });
+  }
 });
 
 // === Tasks API ===
@@ -816,8 +825,8 @@ app.get('/api/production-orders/selectable', async (req, res) => {
 
 // GET all tasks for display
 app.get('/api/tasks', async (req, res) => {
-    try {
-        const query = `
+  try {
+    const query = `
             SELECT
                 pt.id AS db_id,
                 pt.task_code AS id,
@@ -843,106 +852,106 @@ app.get('/api/tasks', async (req, res) => {
             LEFT JOIN maestros.product_operations pop ON pt.product_operation_id = pop.id
             ORDER BY pt.created_at DESC;
         `;
-        const { rows } = await pool.query(query);
+    const { rows } = await pool.query(query);
 
-        // Map DB result to frontend TaskData interface
-        const tasks = rows.map(task => ({
-            ...task,
-            // These fields are managed by frontend state, initialize them here
-            totalElapsedTime: (task.tiempo_minutos || 0) * 60,
-            startTime: null,
-            unproductiveEvents: [], // This would require another table/query
-            imageUrl: 'https://images.unsplash.com/photo-1581092921462-69209a5371587?q=80&w=2070&auto=format&fit=crop'
-        }));
+    // Map DB result to frontend TaskData interface
+    const tasks = rows.map(task => ({
+      ...task,
+      // These fields are managed by frontend state, initialize them here
+      totalElapsedTime: (task.tiempo_minutos || 0) * 60,
+      startTime: null,
+      unproductiveEvents: [], // This would require another table/query
+      imageUrl: 'https://images.unsplash.com/photo-1581092921462-69209a5371587?q=80&w=2070&auto=format&fit=crop'
+    }));
 
-        res.json(tasks);
-    } catch (error) {
-        console.error('Error fetching tasks:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al obtener las tareas.' });
-    }
+    res.json(tasks);
+  } catch (error) {
+    console.error('Error fetching tasks:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al obtener las tareas.' });
+  }
 });
 
 // POST a new task
 app.post('/api/tasks', async (req, res) => {
-    const {
-        task_code,
-        order_id,
-        user_id,
-        work_center_id,
-        product_operation_id,
-        created_by_id
-    } = req.body;
+  const {
+    task_code,
+    order_id,
+    user_id,
+    work_center_id,
+    product_operation_id,
+    created_by_id
+  } = req.body;
 
-    if (!task_code || !order_id || !user_id || !work_center_id || !product_operation_id) {
-        return res.status(400).json({ message: 'Se requieren todos los IDs y el código de tarea para su creación.' });
-    }
-    
-    if (!created_by_id) {
-        return res.status(400).json({ message: 'No se ha proporcionado el ID del usuario creador.' });
-    }
+  if (!task_code || !order_id || !user_id || !work_center_id || !product_operation_id) {
+    return res.status(400).json({ message: 'Se requieren todos los IDs y el código de tarea para su creación.' });
+  }
 
-    const client = await pool.connect();
-    
-    try {
-        await client.query('BEGIN');
-        await client.query("SELECT pg_catalog.set_config('session.user_id', $1, true)", [created_by_id]);
+  if (!created_by_id) {
+    return res.status(400).json({ message: 'No se ha proporcionado el ID del usuario creador.' });
+  }
 
-        const insertQuery = `
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    await client.query("SELECT pg_catalog.set_config('session.user_id', $1, true)", [created_by_id]);
+
+    const insertQuery = `
             INSERT INTO produccion.production_tasks
             (task_code, order_id, user_id, work_center_id, product_operation_id, estado, cantidad_producida, tiempo_minutos, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, 'PENDIENTE', 0, 0, NOW(), NOW())
             RETURNING id, task_code;
         `;
-        const { rows } = await client.query(insertQuery, [task_code, order_id, user_id, work_center_id, product_operation_id]);
-        
-        await client.query('COMMIT');
-        res.status(201).json(rows[0]);
+    const { rows } = await client.query(insertQuery, [task_code, order_id, user_id, work_center_id, product_operation_id]);
 
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error creating task:', error);
-        if (error.code === '23505') { // unique_violation for task_code
-             return res.status(409).json({ message: 'El código de tarea generado ya existe. Por favor, intente de nuevo.' });
-        }
-        res.status(500).json({ message: 'Ocurrió un error interno al crear la tarea.' });
-    } finally {
-        client.release();
+    await client.query('COMMIT');
+    res.status(201).json(rows[0]);
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error creating task:', error);
+    if (error.code === '23505') { // unique_violation for task_code
+      return res.status(409).json({ message: 'El código de tarea generado ya existe. Por favor, intente de nuevo.' });
     }
+    res.status(500).json({ message: 'Ocurrió un error interno al crear la tarea.' });
+  } finally {
+    client.release();
+  }
 });
 
 // New endpoint to update task status
 app.put('/api/tasks/:id/status', async (req, res) => {
-    const { id } = req.params;
-    const { estado } = req.body;
+  const { id } = req.params;
+  const { estado } = req.body;
 
-    if (!id || isNaN(parseInt(id, 10))) {
-        return res.status(400).json({ message: 'Se requiere un ID de tarea válido.' });
-    }
+  if (!id || isNaN(parseInt(id, 10))) {
+    return res.status(400).json({ message: 'Se requiere un ID de tarea válido.' });
+  }
 
-    const validStates = ['EN_PROGRESO', 'PAUSADA', 'FINALIZADA'];
-    if (!estado || !validStates.includes(estado)) {
-        return res.status(400).json({ message: `Estado no válido. Los estados permitidos son: ${validStates.join(', ')}.` });
-    }
+  const validStates = ['EN_PROGRESO', 'PAUSADA', 'FINALIZADA'];
+  if (!estado || !validStates.includes(estado)) {
+    return res.status(400).json({ message: `Estado no válido. Los estados permitidos son: ${validStates.join(', ')}.` });
+  }
 
-    try {
-        const updateQuery = `
+  try {
+    const updateQuery = `
             UPDATE produccion.production_tasks
             SET estado = $1, updated_at = NOW()
             WHERE id = $2
             RETURNING id, estado;
         `;
-        const { rows } = await pool.query(updateQuery, [estado, id]);
+    const { rows } = await pool.query(updateQuery, [estado, id]);
 
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Tarea no encontrada.' });
-        }
-
-        res.status(200).json(rows[0]);
-
-    } catch (error) {
-        console.error('Error updating task status:', error);
-        res.status(500).json({ message: 'Ocurrió un error interno al actualizar el estado de la tarea.' });
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Tarea no encontrada.' });
     }
+
+    res.status(200).json(rows[0]);
+
+  } catch (error) {
+    console.error('Error updating task status:', error);
+    res.status(500).json({ message: 'Ocurrió un error interno al actualizar el estado de la tarea.' });
+  }
 });
 
 
